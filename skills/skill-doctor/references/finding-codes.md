@@ -14,6 +14,7 @@
 - `body-too-large`: `SKILL.md` is large enough that progressive disclosure would help.
 - `allowed-tools-too-broad`: `allowed-tools` uses a wildcard.
 - `overlapping-description`: sibling skills have similar trigger descriptions.
+- `missing-resource`: `SKILL.md` references a missing file under `scripts/`, `references/`, or `assets/`.
 
 ## info
 

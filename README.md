@@ -6,6 +6,7 @@ Skill Doctor is a quality diagnostic tool for Agent Skills. It helps authors cat
 - skill names and folders that do not line up,
 - bloated `SKILL.md` files that should use progressive disclosure,
 - resource files that agents cannot discover from the main skill instructions,
+- resource references that point at missing files,
 - sibling skills that compete for the same trigger,
 - wildcard `allowed-tools` hints.
 
@@ -101,6 +102,7 @@ Exit codes:
 | `body-too-large` | warning | `SKILL.md` should probably move detail into `references/`. |
 | `allowed-tools-too-broad` | warning | `allowed-tools` uses a wildcard. |
 | `overlapping-description` | warning | Sibling skill descriptions are too similar. |
+| `missing-resource` | warning | `SKILL.md` references a missing `scripts/`, `references/`, or `assets/` file. |
 | `orphan-resource` | info | A resource file is not mentioned from `SKILL.md`. |
 
 ## Use As An Agent Skill

@@ -9,6 +9,9 @@ from .models import Finding, Report, Skill
 
 NAME_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$")
 RESOURCE_DIRS = ("scripts", "references", "assets")
+RESOURCE_REF_PATTERN = re.compile(
+    r"(?<![A-Za-z0-9_./-])((?:scripts|references|assets)[/\\][^\s`'\"<>)]+)"
+)
 BROAD_WORDS = {
     "anything",
     "everything",
@@ -133,6 +136,7 @@ def _analyze_single_skill(skill: Skill, root: Path, body_line_limit: int) -> lis
             )
         )
 
+    findings.extend(_find_missing_referenced_resources(skill, root))
     findings.extend(_find_orphan_resources(skill, root))
     findings.extend(_find_tool_warnings(skill, root))
     return findings
@@ -176,6 +180,35 @@ def _find_orphan_resources(skill: Skill, root: Path) -> list[Finding]:
                     "Reference the resource from SKILL.md with guidance on when the agent should read or use it.",
                 )
             )
+    return findings
+
+
+def _find_missing_referenced_resources(skill: Skill, root: Path) -> list[Finding]:
+    findings: list[Finding] = []
+    seen: set[str] = set()
+    search_text = f"{skill.body}\n{skill.description}"
+
+    for match in RESOURCE_REF_PATTERN.finditer(search_text):
+        reference = match.group(1).rstrip(".,;:")
+        normalized = reference.replace("\\", "/")
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+
+        target = skill.path.joinpath(*normalized.split("/"))
+        if not _is_within_directory(target, skill.path) or target.exists():
+            continue
+
+        findings.append(
+            _finding(
+                "warning",
+                "missing-resource",
+                _relative_path(skill.skill_file, root),
+                f"Resource reference `{normalized}` does not exist.",
+                "Create the referenced file, or update SKILL.md to point at an existing resource.",
+            )
+        )
+
     return findings
 
 
@@ -242,3 +275,11 @@ def _relative_path(path: Path, root: Path) -> str:
 
 def _display_path(path: Path) -> str:
     return path.resolve().as_posix()
+
+
+def _is_within_directory(path: Path, directory: Path) -> bool:
+    try:
+        path.resolve().relative_to(directory.resolve())
+    except ValueError:
+        return False
+    return True

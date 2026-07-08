@@ -83,6 +83,28 @@ def test_analyzer_flags_orphaned_resource_files(tmp_path: Path) -> None:
     assert "resource-skill/references/guide.md" in orphan_paths
 
 
+def test_analyzer_flags_missing_referenced_resource_files(tmp_path: Path) -> None:
+    skill_dir = tmp_path / "missing-resource-skill"
+    write_skill(
+        skill_dir,
+        name="missing-resource-skill",
+        body=(
+            "# Missing Resource Skill\n\n"
+            "Read `references/missing.md` before acting.\n"
+            "Use [the checklist](references/checklist.md) for detailed review."
+        ),
+    )
+    (skill_dir / "references").mkdir()
+    (skill_dir / "references" / "checklist.md").write_text("# Checklist\n", encoding="utf-8")
+
+    report = analyze_skills(discover_skills(tmp_path), root=tmp_path)
+
+    missing = [finding for finding in report.findings if finding.code == "missing-resource"]
+    assert len(missing) == 1
+    assert missing[0].path == "missing-resource-skill/SKILL.md"
+    assert "references/missing.md" in missing[0].message
+
+
 def test_analyzer_flags_overlapping_descriptions(tmp_path: Path) -> None:
     write_skill(
         tmp_path / "api-review",
