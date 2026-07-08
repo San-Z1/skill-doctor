@@ -27,6 +27,12 @@ ci
 
 ## Marketplace Copy
 
+Marketplace listing name:
+
+```text
+Skill Doctor Quality Gate
+```
+
 Short description:
 
 ```text

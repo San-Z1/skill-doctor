@@ -62,7 +62,7 @@ def test_repository_exposes_github_action_entrypoint() -> None:
 
     assert action.exists()
     text = action.read_text(encoding="utf-8")
-    assert "name: Skill Doctor" in text
+    assert "name: Skill Doctor Quality Gate" in text
     assert "using: composite" in text
     assert "path:" in text
     assert "fail-on:" in text
@@ -92,6 +92,7 @@ def test_distribution_assets_exist_for_public_launch() -> None:
 
     marketplace_text = marketplace.read_text(encoding="utf-8")
     assert "GitHub Actions Marketplace" in marketplace_text
+    assert "Skill Doctor Quality Gate" in marketplace_text
     assert "San-Z1/skill-doctor@v1" in marketplace_text
     assert "quality-gate" in marketplace_text
 
