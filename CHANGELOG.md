@@ -10,7 +10,9 @@ All notable changes to Skill Doctor are documented here.
 - Frontmatter validation for missing or invalid `name` and `description` fields.
 - Skill quality checks for trigger clarity, broad descriptions, folder/name mismatch, oversized `SKILL.md` files, orphaned resources, overlapping skill descriptions, and wildcard `allowed-tools`.
 - Missing resource reference checks for `scripts/`, `references/`, and `assets/` paths mentioned from `SKILL.md`.
+- Quality score and grade in Markdown, JSON, and SARIF reports.
 - Markdown, JSON, GitHub Actions annotation, and SARIF 2.1.0 report formats.
+- Composite GitHub Action entrypoint for pull request quality gates.
 - Config file support through `--config` with `format`, `fail_on`, and `body_line_limit`.
 - CI-friendly exit thresholds through `--fail-on error|warning|info`.
 - Packaged Agent Skill under `skills/skill-doctor`.

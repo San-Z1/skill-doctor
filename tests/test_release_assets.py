@@ -57,6 +57,27 @@ def test_release_checklist_mentions_publish_script() -> None:
     assert "scripts/verify-release.ps1" in checklist
 
 
+def test_repository_exposes_github_action_entrypoint() -> None:
+    action = ROOT / "action.yml"
+
+    assert action.exists()
+    text = action.read_text(encoding="utf-8")
+    assert "name: Skill Doctor" in text
+    assert "using: composite" in text
+    assert "path:" in text
+    assert "fail-on:" in text
+    assert 'python -m pip install "$GITHUB_ACTION_PATH"' in text
+    assert "skill-doctor" in text
+
+
+def test_readme_promotes_action_quick_start() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "The CI quality gate for Agent Skills" in readme
+    assert "uses: San-Z1/skill-doctor@v1" in readme
+    assert "Quality score" in readme
+
+
 def test_public_text_files_do_not_name_specific_agent_vendors() -> None:
     ignored_dirs = {".git", ".pytest_cache", "dist", "build", "__pycache__"}
     forbidden = ("co" + "dex", "open" + "ai", "clau" + "de", "anth" + "ropic")

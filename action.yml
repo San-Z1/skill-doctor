@@ -1,0 +1,52 @@
+name: Skill Doctor
+description: CI quality gate for Agent Skills.
+author: San-Z1
+
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  path:
+    description: Path to a SKILL.md file, one skill directory, or a skills collection.
+    required: false
+    default: skills
+  fail-on:
+    description: Lowest finding severity that should fail the workflow.
+    required: false
+    default: warning
+  config:
+    description: Optional JSON config file path.
+    required: false
+    default: ""
+  summary:
+    description: Write a Markdown report to the workflow step summary.
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Skill Doctor
+      shell: bash
+      run: python -m pip install "$GITHUB_ACTION_PATH"
+
+    - name: Run Skill Doctor
+      shell: bash
+      run: |
+        args=("${{ inputs.path }}" "--format" "github" "--fail-on" "${{ inputs.fail-on }}")
+        if [ -n "${{ inputs.config }}" ]; then
+          args+=("--config" "${{ inputs.config }}")
+        fi
+        skill-doctor "${args[@]}"
+
+    - name: Write Skill Doctor summary
+      if: ${{ always() && inputs.summary == 'true' }}
+      shell: bash
+      run: |
+        args=("${{ inputs.path }}" "--format" "markdown")
+        if [ -n "${{ inputs.config }}" ]; then
+          args+=("--config" "${{ inputs.config }}")
+        fi
+        skill-doctor "${args[@]}" > "$RUNNER_TEMP/skill-doctor-summary.md" || true
+        cat "$RUNNER_TEMP/skill-doctor-summary.md" >> "$GITHUB_STEP_SUMMARY"

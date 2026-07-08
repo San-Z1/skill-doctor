@@ -13,6 +13,7 @@ def render_markdown(report: Report) -> str:
         f"- Root: `{report.root}`",
         f"- Skills scanned: {report.skills_scanned}",
         f"- Findings: {len(report.findings)}",
+        f"- Quality score: {report.score}/100 ({report.grade})",
         "",
     ]
 
@@ -81,6 +82,8 @@ def render_sarif(report: Report) -> str:
                 },
                 "results": results,
                 "properties": {
+                    "qualityGrade": report.grade,
+                    "qualityScore": report.score,
                     "skillsScanned": report.skills_scanned,
                     "root": report.root,
                 },

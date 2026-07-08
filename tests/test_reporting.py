@@ -24,9 +24,43 @@ def test_render_markdown_includes_summary_and_findings() -> None:
     output = render_markdown(sample_report())
 
     assert "# Skill Doctor Report" in output
+    assert "Quality score: 90/100 (A)" in output
     assert "Skills scanned: 2" in output
     assert "`description-too-broad`" in output
     assert "Narrow the description." in output
+
+
+def test_report_calculates_quality_score_and_grade_from_findings() -> None:
+    report = Report(
+        root="/repo/skills",
+        skills_scanned=3,
+        findings=[
+            Finding(
+                severity="error",
+                code="missing-name",
+                path="broken-skill",
+                message="Skill frontmatter is missing a name.",
+                suggestion="Add a name.",
+            ),
+            Finding(
+                severity="warning",
+                code="description-too-broad",
+                path="broad-skill",
+                message="Description appears broad enough to trigger for unrelated work.",
+                suggestion="Narrow the description.",
+            ),
+            Finding(
+                severity="info",
+                code="orphan-resource",
+                path="skill/references/unused.md",
+                message="Resource is not mentioned by SKILL.md.",
+                suggestion="Reference or remove the file.",
+            ),
+        ],
+    )
+
+    assert report.score == 58
+    assert report.grade == "F"
 
 
 def test_render_json_is_machine_readable() -> None:
@@ -35,6 +69,8 @@ def test_render_json_is_machine_readable() -> None:
     parsed = json.loads(output)
     assert parsed["root"] == "/repo/skills"
     assert parsed["skills_scanned"] == 2
+    assert parsed["score"] == 90
+    assert parsed["grade"] == "A"
     assert parsed["findings"][0]["code"] == "description-too-broad"
 
 
@@ -46,6 +82,8 @@ def test_render_sarif_outputs_code_scanning_log() -> None:
     run = parsed["runs"][0]
     assert run["tool"]["driver"]["name"] == "Skill Doctor"
     assert run["tool"]["driver"]["rules"][0]["id"] == "description-too-broad"
+    assert run["properties"]["qualityScore"] == 90
+    assert run["properties"]["qualityGrade"] == "A"
     result = run["results"][0]
     assert result["ruleId"] == "description-too-broad"
     assert result["level"] == "warning"
@@ -55,6 +93,7 @@ def test_render_sarif_outputs_code_scanning_log() -> None:
 def test_render_markdown_shows_clean_result() -> None:
     output = render_markdown(Report(root="/repo/skills", skills_scanned=1, findings=[]))
 
+    assert "Quality score: 100/100 (A+)" in output
     assert "No findings." in output
 
 

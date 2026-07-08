@@ -1,6 +1,66 @@
 # Skill Doctor
 
-Skill Doctor is a quality diagnostic tool for Agent Skills. It helps authors catch the problems that make skills hard for AI agents and other `SKILL.md`-compatible tools to use well:
+[![CI](https://github.com/San-Z1/skill-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/San-Z1/skill-doctor/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Agent Skills](https://img.shields.io/badge/Agent%20Skills-quality%20gate-blue.svg)](skills/skill-doctor)
+
+**The CI quality gate for Agent Skills.**
+
+Skill Doctor catches the small mistakes that make `SKILL.md` packages hard for AI agents to trust: vague triggers, broken resource links, oversized instructions, competing skill descriptions, and unsafe tool hints.
+
+## 60-Second CI Setup
+
+```yaml
+name: Skill Doctor
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  skill-doctor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: San-Z1/skill-doctor@v1
+        with:
+          path: skills
+          fail-on: warning
+```
+
+Local check:
+
+```bash
+python -m pip install -e .
+skill-doctor skills --format markdown --fail-on warning
+```
+
+Typical output:
+
+```markdown
+# Skill Doctor Report
+
+- Root: `.../skills`
+- Skills scanned: 4
+- Findings: 7
+- Quality score: 18/100 (F)
+
+## ERROR: `invalid-skill-name`
+
+- Path: `bad-name`
+- Message: Skill name `Bad Name` is not lowercase kebab-case.
+- Suggestion: Rename the skill with lowercase letters, digits, and hyphens only.
+```
+
+## Why It Exists
+
+Agent Skills are easy to write and easy to break. Skill Doctor gives maintainers a deterministic review layer before a skill is shared, installed, or accepted in a pull request.
+
+It helps authors catch:
 
 - vague or overly broad trigger descriptions,
 - skill names and folders that do not line up,
@@ -14,7 +74,7 @@ It is intentionally not a malware scanner. Skill Doctor is the publishing and ma
 
 ## Quick Start
 
-Run from this repository:
+Run from a cloned repository:
 
 ```bash
 python -m skill_doctor examples/problematic-skills --format markdown
@@ -81,6 +141,7 @@ Exit codes:
 - Root: `.../examples/problematic-skills`
 - Skills scanned: 4
 - Findings: 7
+- Quality score: 18/100 (F)
 
 ## ERROR: `invalid-skill-name`
 
