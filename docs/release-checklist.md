@@ -23,6 +23,7 @@ Manual checks:
 - Run `python -m skill_doctor skills --fail-on warning` and confirm it exits with `0`.
 - Run a placeholder scan for common unfinished markers and confirm any matches are intentional.
 - Run a public file scan for platform/vendor names and confirm any matches are intentional.
+- Confirm `docs/distribution/marketplace.md`, `docs/distribution/launch-post.md`, and `scripts/record-demo.ps1` are current.
 - Run `./scripts/make-release-zip.ps1` if you want a clean upload archive.
 
 ## GitHub Setup

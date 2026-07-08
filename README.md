@@ -39,6 +39,12 @@ python -m pip install -e .
 skill-doctor skills --format markdown --fail-on warning
 ```
 
+Install the bundled Agent Skill with GitHub CLI:
+
+```bash
+gh skill install San-Z1/skill-doctor skill-doctor@v1
+```
+
 Typical output:
 
 ```markdown
@@ -185,6 +191,12 @@ The wrapper loads the local Python package from `src/`, so it works inside a clo
 ## Upload To GitHub
 
 See [GITHUB_UPLOAD.md](GITHUB_UPLOAD.md) for the shortest web-upload and git-push paths.
+
+## Distribution
+
+- [GitHub Actions Marketplace launch checklist](docs/distribution/marketplace.md)
+- [Launch post draft](docs/distribution/launch-post.md)
+- Demo recording helper: `./scripts/record-demo.ps1`
 
 ## Development
 

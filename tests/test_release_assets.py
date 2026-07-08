@@ -75,7 +75,35 @@ def test_readme_promotes_action_quick_start() -> None:
 
     assert "The CI quality gate for Agent Skills" in readme
     assert "uses: San-Z1/skill-doctor@v1" in readme
+    assert "gh skill install San-Z1/skill-doctor skill-doctor@v1" in readme
+    assert "docs/distribution/marketplace.md" in readme
+    assert "docs/distribution/launch-post.md" in readme
     assert "Quality score" in readme
+
+
+def test_distribution_assets_exist_for_public_launch() -> None:
+    marketplace = ROOT / "docs" / "distribution" / "marketplace.md"
+    launch_post = ROOT / "docs" / "distribution" / "launch-post.md"
+    demo_script = ROOT / "scripts" / "record-demo.ps1"
+
+    assert marketplace.exists()
+    assert launch_post.exists()
+    assert demo_script.exists()
+
+    marketplace_text = marketplace.read_text(encoding="utf-8")
+    assert "GitHub Actions Marketplace" in marketplace_text
+    assert "San-Z1/skill-doctor@v1" in marketplace_text
+    assert "quality-gate" in marketplace_text
+
+    launch_text = launch_post.read_text(encoding="utf-8")
+    assert "I built Skill Doctor" in launch_text
+    assert "San-Z1/skill-doctor" in launch_text
+    assert "Agent Skills" in launch_text
+
+    script_text = demo_script.read_text(encoding="utf-8")
+    assert "examples/problematic-skills" in script_text
+    assert "--format markdown" in script_text
+    assert "Quality score" in script_text
 
 
 def test_public_text_files_do_not_name_specific_agent_vendors() -> None:
