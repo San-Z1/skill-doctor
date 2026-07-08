@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: python -m pip install -e ".[dev]"
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Build wheel
+        run: python -m pip wheel . --no-deps -w dist
+
+      - name: Run example scans
+        run: |
+          python -m skill_doctor examples/good-skills --format json
+          python -m skill_doctor examples/problematic-skills --format markdown || test "$?" -eq 1
+          python -m skill_doctor examples/problematic-skills --format github || test "$?" -eq 1
+          python -m skill_doctor examples/problematic-skills --format sarif || test "$?" -eq 1
+          python -m skill_doctor examples/problematic-skills --config examples/skill-doctor.config.json || test "$?" -eq 1

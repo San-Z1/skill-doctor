@@ -1,0 +1,5 @@
+{
+  "format": "github",
+  "fail_on": "warning",
+  "body_line_limit": 180
+}
