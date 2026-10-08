@@ -11,7 +11,7 @@ The highest matching risk wins. The report includes every matching rule; these a
 
 Trigger terms are lowercase words excluding common English stopwords. A material change adds or removes at least two terms, or its symmetric difference is at least 30% of the smaller term set (denominator at least one). A replaced word counts as one removal and one addition. Counts are not semantic understanding.
 
-Tools are normalized as a set, preserving arguments inside parentheses. Tools introduced by a new Skill also require review. Resources use SHA-256 hashes; a rename is an addition plus a removal. Skills pair by non-empty frontmatter name; changing a name is a removal plus an addition. Duplicate names fail comparison instead of silently overwriting a Skill.
+Tools are normalized as a set, preserving arguments inside parentheses. Tools introduced by a new Skill also require review. Resources use SHA-256 hashes, normalizing CRLF for UTF-8 text and preserving binary bytes; a rename is an addition plus a removal. Generated Python caches are excluded. Skills pair by non-empty frontmatter name; changing a name is a removal plus an addition. Duplicate names fail comparison instead of silently overwriting a Skill.
 
 The baseline comes from a Git commit, and the current side includes staged, unstaged, and untracked files. Missing baseline collections are empty. A missing current target is an error; compare the enclosing collection when reviewing deletion of a Skill. Symlink resources are rejected. No scanned script is executed, no model is called, and no API key is needed.
 

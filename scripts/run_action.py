@@ -7,11 +7,17 @@ import subprocess
 import sys
 from pathlib import Path
 
+ACTION_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ACTION_ROOT / "src"))
 from skill_doctor.config import load_config
 
 
 def _run(args):
     return subprocess.run(args, capture_output=True, text=True, encoding="utf-8")
+
+
+def _exit_status(code):
+    return code if code in {0, 1, 2} else 2
 
 
 def _baseline_ref(explicit):
@@ -46,20 +52,22 @@ def main():
     target = os.environ.get("SD_PATH", "skills")
     fail_on = os.environ.get("SD_FAIL_ON", "warning")
     config_path = os.environ.get("SD_CONFIG", "")
-    command = [sys.executable, "-m", "skill_doctor"]
+    # This wrapper belongs to the pinned Action, never to the scanned checkout.
+    command = [sys.executable, "-I", "-X", "utf8",
+               str(ACTION_ROOT / "skills" / "skill-doctor" / "scripts" / "run_skill_doctor.py")]
     scan_args = [target, "--fail-on", fail_on]
     if config_path:
         scan_args += ["--config", config_path]
     scan = _run(command + scan_args + ["--format", "github"])
     print(scan.stdout, end="")
     print(scan.stderr, end="", file=sys.stderr)
-    status = scan.returncode
+    status = _exit_status(scan.returncode)
     summaries = []
     write_summary = os.environ.get("SD_SUMMARY", "true").lower() == "true"
     if write_summary:
         result = _run(command + scan_args + ["--format", "markdown"])
         summaries.append(result.stdout or "Static scan failed.\n")
-        status = max(status, result.returncode)
+        status = max(status, _exit_status(result.returncode))
     try:
         base_ref = _baseline_ref(os.environ.get("SD_COMPARE_REF", ""))
         if base_ref:
@@ -72,11 +80,11 @@ def main():
             result = _run(command + diff_args + ["--format", "github"])
             print(result.stdout, end="")
             print(result.stderr, end="", file=sys.stderr)
-            status = max(status, result.returncode)
+            status = max(status, _exit_status(result.returncode))
             if write_summary:
                 result = _run(command + diff_args + ["--format", "markdown"])
                 summaries.append(result.stdout or "Change review failed.\n")
-                status = max(status, result.returncode)
+                status = max(status, _exit_status(result.returncode))
     except (ValueError, OSError) as exc:
         print(str(exc), file=sys.stderr)
         summaries.append("## Baseline error\n\n" + str(exc).replace("<", "&lt;").replace("\n", " ") + "\n")

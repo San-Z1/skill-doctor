@@ -4,11 +4,14 @@ import sys
 import zipfile
 from pathlib import Path
 
+from test_git_baseline import repository
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_standalone_bundle_runs_scan_and_diff_help(tmp_path):
+def test_standalone_bundle_runs_scan_and_diff(repository):
+    tmp_path = repository
     archive = tmp_path / "skill.zip"
     result = subprocess.run([sys.executable, str(ROOT / "scripts" / "build_skill_bundle.py"), str(archive)], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
@@ -22,6 +25,14 @@ def test_standalone_bundle_runs_scan_and_diff_help(tmp_path):
     result = subprocess.run([sys.executable, "-I", str(runner), "diff", "--help"], capture_output=True, text=True, cwd=tmp_path)
     assert result.returncode == 0
     assert "--fail-on-risk" in result.stdout
+    result = subprocess.run([sys.executable, "-I", str(runner), str(runner.parents[1]), "--format", "json"], capture_output=True, text=True, cwd=tmp_path)
+    assert result.returncode == 0, result.stderr
+    assert '"score": 100' in result.stdout
+    source = repository / "skills" / "review-api" / "SKILL.md"
+    source.write_text(source.read_text().replace("Read", "Read, Write"), encoding="utf-8")
+    result = subprocess.run([sys.executable, "-I", str(runner), "diff", str(repository / "skills"), "--base-ref", "HEAD", "--fail-on-risk", "high"], capture_output=True, text=True, cwd=tmp_path)
+    assert result.returncode == 1, result.stderr
+    assert "HIGH" in result.stdout
 
 
 def test_missing_runtime_has_actionable_error_not_traceback(tmp_path):

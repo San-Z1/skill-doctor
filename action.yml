@@ -48,4 +48,4 @@ runs:
         SD_SUMMARY: ${{ inputs.summary }}
         SD_COMPARE_REF: ${{ inputs.compare-ref }}
         SD_FAIL_ON_RISK: ${{ inputs.fail-on-risk }}
-      run: python "$GITHUB_ACTION_PATH/scripts/run_action.py"
+      run: python -I -X utf8 "$GITHUB_ACTION_PATH/scripts/run_action.py"

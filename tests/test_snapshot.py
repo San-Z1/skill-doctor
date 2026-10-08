@@ -76,6 +76,19 @@ def test_generated_python_cache_is_not_a_skill_resource(tmp_path: Path) -> None:
     assert snapshot_target(tmp_path) == before
 
 
+@pytest.mark.parametrize("content,canonical", [
+    (b"hello\r\nworld\r\n", b"hello\nworld\n"),
+    (b"binary\0\r\n", b"binary\0\r\n"),
+    (b"\xff\r\n", b"\xff\r\n"),
+    (b"a" * 65535 + b"\r\n", b"a" * 65535 + b"\n"),
+], ids=("utf8-text", "binary-nul", "binary-invalid-utf8", "chunk-boundary"))
+def test_resource_hash_normalizes_text_but_preserves_binary(tmp_path, content, canonical):
+    skill = write_skill(tmp_path)
+    (skill / "references" / "check.md").write_bytes(content)
+    resource = snapshot_target(tmp_path).skills[0].resources[0]
+    assert resource.sha256 == hashlib.sha256(canonical).hexdigest()
+
+
 @pytest.mark.parametrize("actual,threshold,expected", [
     ("high", "high", True), ("medium", "high", False),
     ("high", "none", False), ("none", "low", False), ("low", "low", True),

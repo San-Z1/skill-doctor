@@ -1,11 +1,9 @@
-import io
 import subprocess
-import tarfile
 from pathlib import Path
 
 import pytest
 
-from skill_doctor.git_baseline import GitBaselineError, baseline_target, extract_archive, review_target
+from skill_doctor.git_baseline import GitBaselineError, baseline_target, safe_destination, review_target
 
 
 def git(root, *args):
@@ -83,6 +81,42 @@ def test_committed_crlf_script_is_not_a_false_modification(repository):
     assert review_target(repository / "skills", "HEAD").overall_risk == "none"
 
 
+def test_export_ignore_cannot_hide_baseline_resource_deletion(repository):
+    skill = repository / "skills" / "review-api"
+    (skill / "scripts").mkdir()
+    resource = skill / "scripts" / "check.py"
+    resource.write_bytes(b"pass\n")
+    (repository / ".gitattributes").write_text("skills/review-api/scripts/* export-ignore\n", encoding="utf-8")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "export attributes")
+    resource.unlink()
+    report = review_target(repository / "skills", "HEAD")
+    assert report.overall_risk == "medium"
+    assert report.changes[0].resources_removed[0].path == "scripts/check.py"
+
+
+def test_export_subst_does_not_change_baseline_content(repository):
+    skill = repository / "skills" / "review-api"
+    (skill / "references").mkdir()
+    (skill / "references" / "hash.md").write_bytes(b"$Format:%H$\n")
+    (repository / ".gitattributes").write_text("*.md export-subst\n", encoding="utf-8")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "export substitution")
+    assert review_target(repository / "skills", "HEAD").overall_risk == "none"
+
+
+@pytest.mark.parametrize("encoding,git_encoding", [("utf-16", "UTF-16"), ("utf-16-le", "UTF-16LE")])
+def test_working_tree_encoding_does_not_create_false_script_changes(repository, encoding, git_encoding):
+    skill = repository / "skills" / "review-api"
+    (skill / "scripts").mkdir()
+    (skill / "scripts" / "check.ps1").write_bytes("Write-Output 'check'\r\n".encode(encoding))
+    (repository / ".gitattributes").write_text("*.ps1 text working-tree-encoding=" + git_encoding + "\n", encoding="utf-8")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "encoded resource")
+    assert git(repository, "status", "--porcelain") == b""
+    assert review_target(repository / "skills", "HEAD").overall_risk == "none"
+
+
 @pytest.mark.parametrize("ref", ["does-not-exist", "--output=outside", "HEAD:path"])
 def test_unknown_or_noncommit_ref(repository, ref):
     with pytest.raises(GitBaselineError, match="baseline ref"):
@@ -97,18 +131,16 @@ def test_non_git_missing_target_and_outside_target(tmp_path_factory, repository)
         review_target(repository / "missing", "HEAD")
 
 
-@pytest.mark.parametrize("name,kind", [
-    ("../escape", tarfile.REGTYPE), ("/escape", tarfile.REGTYPE),
-    ("C:/escape", tarfile.REGTYPE), ("a\\escape", tarfile.REGTYPE),
-    ("link", tarfile.SYMTYPE), ("hard", tarfile.LNKTYPE), ("device", tarfile.CHRTYPE),
-])
-def test_unsafe_archive_entries_are_rejected(tmp_path, name, kind):
-    data = io.BytesIO()
-    with tarfile.open(fileobj=data, mode="w") as archive:
-        member = tarfile.TarInfo(name)
-        member.type = kind
-        member.linkname = "outside"
-        archive.addfile(member)
-    data.seek(0)
+@pytest.mark.parametrize("name", ["../escape", "/escape", "C:/escape", "a\\escape", "", "a\0b"])
+def test_unsafe_baseline_paths_are_rejected(tmp_path, name):
     with pytest.raises(GitBaselineError, match="Unsafe"):
-        extract_archive(data, tmp_path)
+        safe_destination(name, tmp_path)
+
+
+def test_git_symlink_entry_is_rejected_without_checkout(repository):
+    result = subprocess.run(["git", "-C", str(repository), "hash-object", "-w", "--stdin"], input=b"outside", capture_output=True, check=True)
+    sha = result.stdout.decode().strip()
+    git(repository, "update-index", "--add", "--cacheinfo", "120000," + sha + ",skills/review-api/references/link")
+    git(repository, "commit", "-m", "symlink entry")
+    with pytest.raises(GitBaselineError, match="Unsafe"):
+        review_target(repository / "skills", "HEAD")

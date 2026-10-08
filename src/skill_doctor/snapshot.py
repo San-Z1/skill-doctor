@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import codecs
 import json
 import re
 from pathlib import Path
@@ -31,7 +32,7 @@ def normalize_tools(value: str) -> tuple[str, ...]:
     return tuple(sorted(set(tokens)))
 
 
-def snapshot_target(target: Path, *, body_line_limit: int = 180) -> SnapshotSet:
+def snapshot_target(target: Path, *, body_line_limit: int = 180, resource_encodings: dict[Path, str] | None = None) -> SnapshotSet:
     if target.is_symlink():
         raise ValueError(f"Symbolic links are not supported: {target}")
     target = target.resolve()
@@ -57,7 +58,7 @@ def snapshot_target(target: Path, *, body_line_limit: int = 180) -> SnapshotSet:
                 if path.is_file():
                     resources.append(ResourceSnapshot(
                         path=path.relative_to(skill.path).as_posix(), kind=kind,
-                        sha256=_file_hash(path),
+                        sha256=_file_hash(path, (resource_encodings or {}).get(path)),
                     ))
         resources_by_path[skill.path] = tuple(resources)
 
@@ -85,9 +86,36 @@ def snapshot_target(target: Path, *, body_line_limit: int = 180) -> SnapshotSet:
     return SnapshotSet(tuple(snapshots), report.score, report.grade)
 
 
-def _file_hash(path: Path) -> str:
-    digest = hashlib.sha256()
+def _file_hash(path: Path, encoding: str | None = None) -> str:
+    raw = hashlib.sha256()
+    normalized = hashlib.sha256()
+    try:
+        decoder = codecs.getincrementaldecoder(encoding or "utf-8")()
+    except LookupError as exc:
+        raise ValueError(f"Unsupported resource encoding {encoding!r}: {path}") from exc
+    text = True
+    carry = ""
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(65536), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+            raw.update(chunk)
+            if text:
+                try:
+                    content = decoder.decode(chunk)
+                    text = "\0" not in content
+                except UnicodeDecodeError as exc:
+                    if encoding:
+                        raise ValueError(f"Resource does not match encoding {encoding!r}: {path}") from exc
+                    text = False
+                if text:
+                    content = carry + content
+                    carry = "\r" if content.endswith("\r") else ""
+                    normalized.update((content[:-1] if carry else content).replace("\r\n", "\n").encode("utf-8"))
+    if text:
+        try:
+            content = carry + decoder.decode(b"", final=True)
+            normalized.update(content.replace("\r\n", "\n").encode("utf-8"))
+        except UnicodeDecodeError as exc:
+            if encoding:
+                raise ValueError(f"Resource does not match encoding {encoding!r}: {path}") from exc
+            text = False
+    return (normalized if text else raw).hexdigest()

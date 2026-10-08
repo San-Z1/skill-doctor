@@ -62,6 +62,7 @@ Discovery supports one Skill or immediate Skill folders in a collection, not arb
 
 Only scripts, references, and assets are hashed. No scanned script is executed, no model is called, and no automated repair or malware/prompt-injection claim is made.
 Generated Python bytecode and cache directories are excluded from resource snapshots and orphan-resource findings.
+Resource hashes normalize CRLF to LF for valid text without NUL characters; binary files retain their exact bytes. Current resources also honor Git's declared `working-tree-encoding` (including UTF-16 script checkouts) and canonicalize text to UTF-8. Unsupported or invalid declared encodings fail clearly. This avoids platform checkout noise. Baselines are read directly from Git blobs, so export attributes cannot hide or substitute content and checkout filters are never run.
 
 ## Reproducible Demo
 

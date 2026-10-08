@@ -15,6 +15,8 @@ All notable changes to Skill Doctor are documented here.
 ### Fixed
 
 - Action inputs are passed as arguments, never interpolated into shell commands.
+- Action scans use an isolated trusted runtime, preventing checkout-local module shadowing.
+- Raw Git baseline reads bypass export attributes and checkout filters; text hashes handle checkout line endings and declared encodings.
 - Job summaries survive failed quality/risk gates; baseline fetch errors are not silently ignored.
 - Release checks enforce subprocess exit codes; source ZIPs preserve directory structure.
 - Missing runtime in source-only Skill installs produces actionable guidance.
