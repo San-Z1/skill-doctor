@@ -1,13 +1,11 @@
 ---
 name: skill-doctor
-description: Diagnose Agent Skill quality before publishing, installing, or maintaining skills. Use when reviewing SKILL.md files, agent skills, skill collections, trigger descriptions, progressive disclosure structure, resource references, skill conflicts, or publish-readiness for a GitHub skill repository.
+description: Use when reviewing Agent Skill packages before publishing or installing, or reviewing a pull request that changes SKILL.md triggers, allowed-tools, instructions, scripts, references, or assets. Diagnose authoring issues and summarize behavior changes against a Git baseline.
 ---
 
 # Skill Doctor
 
-## Overview
-
-Use Skill Doctor to review Agent Skills without executing untrusted skill scripts. The bundled CLI reads `SKILL.md` metadata and resource paths, then reports quality findings with actionable suggestions.
+Review Skill quality and changes without executing the target's scripts. Locate this Skill's installation directory before invoking `scripts/run_skill_doctor.py`; do not assume it is under the working repository. Python 3.10+ is required, and change review also requires Git.
 
 ## Workflow
 
@@ -15,17 +13,33 @@ Use Skill Doctor to review Agent Skills without executing untrusted skill script
 2. Run the scanner:
 
 ```bash
-python skills/skill-doctor/scripts/run_skill_doctor.py <target> --format markdown
+python <skill-directory>/scripts/run_skill_doctor.py <target> --format markdown
 ```
 
 Use JSON when another tool will consume the result:
 
 ```bash
-python skills/skill-doctor/scripts/run_skill_doctor.py <target> --format json
+python <skill-directory>/scripts/run_skill_doctor.py <target> --format json
 ```
 
 3. Treat `error` findings as release blockers. Treat `warning` findings as likely quality issues. Treat `info` findings as review prompts.
 4. Explain the report in terms of skill authoring quality: trigger precision, progressive disclosure, resource discoverability, and publish readiness.
+
+## Change Review
+
+For a pull request or an explicit comparison request, choose the base commit from the user's request or the pull request's base SHA. Do not guess a branch name or compare against HEAD when the user expects the entire pull request.
+
+```bash
+python <skill-directory>/scripts/run_skill_doctor.py diff <target> --base-ref <commit-or-ref> --format markdown
+```
+
+Run inside the target repository. The baseline must already be available locally; fetch only the requested ref if authorized. Comparison includes uncommitted workspace changes and never checks out the baseline. JSON output uses `schema_version: 1`.
+
+Explain added/removed/moved Skills, tool restrictions, trigger terms, instruction size, resource changes, introduced/resolved findings, and the exact risk evidence. Treat high risk as a request for maintainer review, not proof of a vulnerability. Do not claim the scanner understands instruction semantics or detects malware. Read `references/change-risk-rules.md` for thresholds and limitations.
+
+Only enable `--fail-on-risk high` (or another threshold) when the user requests a gate. Exit codes: 0 completed without gated findings/risk, 1 gate exceeded, 2 comparison or input failed. A failed comparison is not a clean result.
+
+The standalone release ZIP includes its own runtime. A source-only Skill install requires the CLI package; report missing runtime clearly instead of silently installing or downloading code.
 
 ## Review Guidance
 
