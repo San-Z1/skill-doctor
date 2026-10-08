@@ -32,7 +32,9 @@ def normalize_tools(value: str) -> tuple[str, ...]:
 
 
 def snapshot_target(target: Path, *, body_line_limit: int = 180) -> SnapshotSet:
-    target = target.absolute()
+    if target.is_symlink():
+        raise ValueError(f"Symbolic links are not supported: {target}")
+    target = target.resolve()
     root = target.parent if target.is_file() else target
     skills = discover_skills(target)
     names: set[str] = set()
