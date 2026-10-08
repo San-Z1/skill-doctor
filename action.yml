@@ -23,6 +23,14 @@ inputs:
     description: Write a Markdown report to the workflow step summary.
     required: false
     default: "true"
+  compare-ref:
+    description: Git baseline ref. Defaults to the pull request base commit on pull request events.
+    required: false
+    default: ""
+  fail-on-risk:
+    description: Lowest change risk that should fail the workflow (none, low, medium, high).
+    required: false
+    default: none
 
 runs:
   using: composite
@@ -33,20 +41,11 @@ runs:
 
     - name: Run Skill Doctor
       shell: bash
-      run: |
-        args=("${{ inputs.path }}" "--format" "github" "--fail-on" "${{ inputs.fail-on }}")
-        if [ -n "${{ inputs.config }}" ]; then
-          args+=("--config" "${{ inputs.config }}")
-        fi
-        skill-doctor "${args[@]}"
-
-    - name: Write Skill Doctor summary
-      if: ${{ always() && inputs.summary == 'true' }}
-      shell: bash
-      run: |
-        args=("${{ inputs.path }}" "--format" "markdown")
-        if [ -n "${{ inputs.config }}" ]; then
-          args+=("--config" "${{ inputs.config }}")
-        fi
-        skill-doctor "${args[@]}" > "$RUNNER_TEMP/skill-doctor-summary.md" || true
-        cat "$RUNNER_TEMP/skill-doctor-summary.md" >> "$GITHUB_STEP_SUMMARY"
+      env:
+        SD_PATH: ${{ inputs.path }}
+        SD_FAIL_ON: ${{ inputs.fail-on }}
+        SD_CONFIG: ${{ inputs.config }}
+        SD_SUMMARY: ${{ inputs.summary }}
+        SD_COMPARE_REF: ${{ inputs.compare-ref }}
+        SD_FAIL_ON_RISK: ${{ inputs.fail-on-risk }}
+      run: python "$GITHUB_ACTION_PATH/scripts/run_action.py"

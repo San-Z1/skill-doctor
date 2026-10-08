@@ -67,7 +67,9 @@ def test_repository_exposes_github_action_entrypoint() -> None:
     assert "path:" in text
     assert "fail-on:" in text
     assert 'python -m pip install "$GITHUB_ACTION_PATH"' in text
-    assert "skill-doctor" in text
+    assert "scripts/run_action.py" in text
+    assert "SD_COMPARE_REF: ${{ inputs.compare-ref }}" in text
+    assert "SD_FAIL_ON_RISK: ${{ inputs.fail-on-risk }}" in text
 
 
 def test_readme_promotes_action_quick_start() -> None:
