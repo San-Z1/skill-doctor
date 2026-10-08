@@ -73,6 +73,16 @@ def test_single_skill_file_includes_resources(repository):
     assert review_target(skill / "SKILL.md", "HEAD").overall_risk == "none"
 
 
+def test_committed_crlf_script_is_not_a_false_modification(repository):
+    skill = repository / "skills" / "review-api"
+    (skill / "scripts").mkdir()
+    (skill / "scripts" / "check.py").write_bytes(b"# committed text\r\npass\r\n")
+    (repository / ".gitattributes").write_text("*.py text eol=crlf\n", encoding="utf-8")
+    git(repository, "add", ".")
+    git(repository, "commit", "-m", "text resource")
+    assert review_target(repository / "skills", "HEAD").overall_risk == "none"
+
+
 @pytest.mark.parametrize("ref", ["does-not-exist", "--output=outside", "HEAD:path"])
 def test_unknown_or_noncommit_ref(repository, ref):
     with pytest.raises(GitBaselineError, match="baseline ref"):

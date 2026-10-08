@@ -61,6 +61,7 @@ JSON has `schema_version: 1` with guaranteed `base_ref`, `target`, `overall_risk
 Discovery supports one Skill or immediate Skill folders in a collection, not arbitrary recursive discovery. Frontmatter supports scalar fields, not full YAML. Trigger terms are lexical rather than semantic; resource renames are removal plus addition. A Skill name change is also removal plus addition; a folder move with the same name is paired. Diff rejects symlinks and duplicate non-empty names. The Git baseline includes only committed files, while the current side includes local edits and untracked files.
 
 Only scripts, references, and assets are hashed. No scanned script is executed, no model is called, and no automated repair or malware/prompt-injection claim is made.
+Generated Python bytecode and cache directories are excluded from resource snapshots and orphan-resource findings.
 
 ## Reproducible Demo
 

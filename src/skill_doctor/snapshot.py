@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-from .analyzer import RESOURCE_DIRS, STOPWORDS, analyze_skills
+from .analyzer import RESOURCE_DIRS, STOPWORDS, analyze_skills, is_generated_resource
 from .change_models import ResourceSnapshot, SkillSnapshot, SnapshotSet
 from .discovery import discover_skills
 from .models import calculate_quality_score, grade_for_score
@@ -50,6 +50,8 @@ def snapshot_target(target: Path, *, body_line_limit: int = 180) -> SnapshotSet:
             directory = skill.path / kind
             paths = [directory, *sorted(directory.rglob("*"))]
             for path in paths:
+                if is_generated_resource(path):
+                    continue
                 if path.is_symlink():
                     raise ValueError(f"Symbolic links are not supported: {path}")
                 if path.is_file():

@@ -67,6 +67,15 @@ def test_duplicate_names_are_not_silently_discarded(tmp_path: Path) -> None:
         snapshot_target(tmp_path)
 
 
+def test_generated_python_cache_is_not_a_skill_resource(tmp_path: Path) -> None:
+    skill = write_skill(tmp_path)
+    before = snapshot_target(tmp_path)
+    cache = skill / "scripts" / "__pycache__"
+    cache.mkdir(parents=True)
+    (cache / "helper.cpython-310.pyc").write_bytes(b"generated")
+    assert snapshot_target(tmp_path) == before
+
+
 @pytest.mark.parametrize("actual,threshold,expected", [
     ("high", "high", True), ("medium", "high", False),
     ("high", "none", False), ("none", "low", False), ("low", "low", True),

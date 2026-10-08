@@ -168,6 +168,8 @@ def _find_orphan_resources(skill: Skill, root: Path) -> list[Finding]:
         if not directory.exists():
             continue
         for resource in sorted(path for path in directory.rglob("*") if path.is_file()):
+            if is_generated_resource(resource):
+                continue
             relative_to_skill = resource.relative_to(skill.path).as_posix()
             if relative_to_skill.lower() in body_search or resource.name.lower() in body_search:
                 continue
@@ -283,3 +285,7 @@ def _is_within_directory(path: Path, directory: Path) -> bool:
     except ValueError:
         return False
     return True
+
+
+def is_generated_resource(path: Path) -> bool:
+    return "__pycache__" in path.parts or path.suffix == ".pyc"
