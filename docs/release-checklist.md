@@ -25,6 +25,14 @@ Manual checks:
 - Run a public file scan for platform/vendor names and confirm any matches are intentional.
 - Confirm `docs/distribution/marketplace.md`, `docs/distribution/launch-post.md`, and `scripts/record-demo.ps1` are current.
 - Run `./scripts/make-release-zip.ps1` if you want a clean upload archive.
+- Run `python scripts/demo_change_review.py --fail-on-risk high` and confirm exit 1 with tool expansion evidence.
+- Run `python scripts/build_skill_bundle.py`; verify it runs after extraction without the repository or installed package.
+- Confirm `docs/change-review.md`, risk rules, and the new release notes are current.
+- Confirm PR base fetching, gated failures, and summary retention have integration test coverage.
+
+## Compatible v1 Update
+
+Publish `v1.1.0` only after local verification and review. Push main and the immutable version tag, wait for the Python CI matrix, then publish the release with the wheel and `skill-doctor-skill.zip`. Move the floating `v1` tag using a lease against its previously inspected remote SHA. Do not overwrite an unexpected tag or remote main change. Keep the existing Marketplace listing.
 
 ## GitHub Setup
 

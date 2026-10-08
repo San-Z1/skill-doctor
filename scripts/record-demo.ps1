@@ -41,3 +41,7 @@ Invoke-DemoCommand `
 
 Write-Host ""
 Write-Host "Recording tip: run this script while recording a terminal GIF, then trim after the Quality score appears." -ForegroundColor Green
+Invoke-DemoCommand `
+    -CommandText "python scripts/demo_change_review.py --fail-on-risk high" `
+    -Command { python scripts/demo_change_review.py --fail-on-risk high } `
+    -AllowedExitCodes @(1)

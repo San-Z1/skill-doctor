@@ -9,7 +9,7 @@ Use this checklist when publishing Skill Doctor as a GitHub Action and preparing
 - Use a short About description:
 
 ```text
-CI quality gate for Agent Skills.
+CI quality gates and explainable pull request change review for Agent Skills.
 ```
 
 - Add repository topics:
@@ -42,7 +42,7 @@ Catch broken Agent Skills before they land in your repository.
 Long description:
 
 ```text
-Skill Doctor is a CI quality gate for Agent Skills. It scans SKILL.md files and bundled resources for vague triggers, broken resource links, oversized instructions, competing skill descriptions, and broad tool hints. Reports are available as workflow annotations, Markdown summaries, JSON, and SARIF, with a quality score and grade for quick review.
+Skill Doctor is a CI quality gate for Agent Skills. It checks publishing quality and compares pull requests against their base commit to explain changes to triggers, tool restrictions, instructions, scripts, references, and assets. Reports include deterministic risk evidence, before/after scores, workflow annotations, Markdown summaries, and JSON. Static scans also support SARIF. No scanned scripts are executed, no API key is needed, and no write permissions or PR comments are required. Risk levels are review heuristics, not security verdicts.
 ```
 
 Primary workflow snippet:
@@ -52,15 +52,16 @@ Primary workflow snippet:
   with:
     path: skills
     fail-on: warning
+    fail-on-risk: high
 ```
 
 ## Release Steps
 
 1. Run `./scripts/verify-release.ps1`.
-2. Confirm the `v1` tag points at the release commit.
-3. Draft a GitHub release from the `v1` tag.
-4. Publish the action from the GitHub release page.
-5. Add the Marketplace link to `README.md` after the listing is live.
+2. Publish an immutable `v1.1.0` tag and release with the wheel and standalone Skill ZIP.
+3. Confirm remote CI passes on the release commit, then move `v1` to that same commit with a tag lease.
+4. Update the Marketplace release from the GitHub release page if required.
+5. Keep the existing Marketplace link in README; do not create a second listing.
 
 ## Launch Positioning
 

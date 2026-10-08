@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "skill-doctor"
-version = "0.1.0"
-description = "Quality diagnostics for Agent Skills before publishing or installing."
+version = "1.1.0"
+description = "Static quality gates and Git-based behavior change review for Agent Skills."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

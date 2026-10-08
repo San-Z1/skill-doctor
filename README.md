@@ -6,7 +6,24 @@
 
 **The CI quality gate for Agent Skills.**
 
-Skill Doctor catches the small mistakes that make `SKILL.md` packages hard for AI agents to trust: vague triggers, broken resource links, oversized instructions, competing skill descriptions, and unsafe tool hints.
+Review what an Agent Skill pull request changes, not just whether its files look valid. Skill Doctor compares triggers, tool restrictions, instructions, scripts, references, and assets against a Git baseline, with explainable risk levels and a CI gate.
+
+```bash
+skill-doctor diff skills --base-ref main --fail-on-risk high
+```
+
+Example change evidence:
+
+```text
+review-api: modified / HIGH
+Tools added: Write
+Script added: scripts/check.py
+Quality: 100 (A+) -> 100 (A+)
+```
+
+A perfect static score can still accompany a behavior-expanding change. No API keys, model calls, or execution of scanned scripts. Risk levels are review heuristics, not a malware or prompt-injection verdict.
+
+[Marketplace](https://github.com/marketplace/actions/skill-doctor-quality-gate) | [Change review guide](docs/change-review.md) | [Standalone Skill ZIP](https://github.com/San-Z1/skill-doctor/releases/download/v1.1.0/skill-doctor-skill.zip)
 
 ## 60-Second CI Setup
 
@@ -21,6 +38,8 @@ on:
 jobs:
   skill-doctor:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,6 +49,7 @@ jobs:
         with:
           path: skills
           fail-on: warning
+          fail-on-risk: high
 ```
 
 Local check:
@@ -39,7 +59,15 @@ python -m pip install -e .
 skill-doctor skills --format markdown --fail-on warning
 ```
 
-Install the bundled Agent Skill with GitHub CLI:
+On pull requests, the Action compares against the PR base commit automatically, fetching that commit if needed. On pushes, it only scans unless `compare-ref` is supplied. It adds workflow annotations and a job summary without write permissions or PR comments.
+
+Install the CLI directly from a release:
+
+```bash
+python -m pip install "git+https://github.com/San-Z1/skill-doctor.git@v1.1.0"
+```
+
+Install the source Agent Skill with a GitHub CLI version that supports Skill installation (the CLI package above is required outside a cloned repository):
 
 ```bash
 gh skill install San-Z1/skill-doctor skill-doctor@v1
@@ -188,6 +216,14 @@ python skills/skill-doctor/scripts/run_skill_doctor.py <target> --format markdow
 
 The wrapper loads the local Python package from `src/`, so it works inside a cloned repository without installing the package first.
 
+For a standalone installation or a Skill marketplace upload, use `skill-doctor-skill.zip` from [Releases](https://github.com/San-Z1/skill-doctor/releases). It includes `SKILL.md`, references, the wrapper, and the runtime. Unzip the archive into your agent's Skill installation directory, and invoke the wrapper using its actual installed path. Python 3.10+ is required; diff mode also needs Git.
+
+Do not upload GitHub's whole-repository source ZIP as a single Skill package. To build the dedicated archive locally:
+
+```bash
+python scripts/build_skill_bundle.py
+```
+
 ## Upload To GitHub
 
 See [GITHUB_UPLOAD.md](GITHUB_UPLOAD.md) for the shortest web-upload and git-push paths.
@@ -200,7 +236,7 @@ See [GITHUB_UPLOAD.md](GITHUB_UPLOAD.md) for the shortest web-upload and git-pus
 
 ## Development
 
-Release notes start in [CHANGELOG.md](CHANGELOG.md), with the first GitHub release draft at [docs/releases/v0.1.0.md](docs/releases/v0.1.0.md).
+Release notes are in [CHANGELOG.md](CHANGELOG.md), with the latest release draft at [docs/releases/v1.1.0.md](docs/releases/v1.1.0.md).
 
 Install development dependencies:
 
@@ -245,6 +281,8 @@ Prepare and push the first GitHub release after configuring your Git identity an
 ## Design Notes
 
 Skill Doctor is static by design. It reads `SKILL.md` files and resource paths, but it does not execute scripts inside the scanned skill. This keeps reviews safe enough to run on unfamiliar skill repositories.
+
+Change review includes uncommitted workspace changes. It does not modify the branch, index, or working tree. Duplicate Skill names and symlink resources fail comparison explicitly. The lightweight frontmatter reader expects scalar `key: value` fields; full YAML block scalars and multiline lists are not supported. See [limitations and risk rules](docs/change-review.md).
 
 ## License
 

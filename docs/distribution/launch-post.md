@@ -7,7 +7,9 @@ Use this as the first public announcement. Keep the post focused on the problem 
 ```text
 I built Skill Doctor: a CI quality gate for Agent Skills.
 
-It catches vague triggers, broken resource links, oversized SKILL.md files, overlapping skills, and broad tool hints before they land in a repository.
+New in v1.1: it explains what a Skill PR changes: triggers, tool permissions, instructions, scripts, and resources. A Skill can keep a 100/100 quality score while expanding access from Read to Read plus Write; the change review flags that separately.
+
+Try it locally: skill-doctor diff skills --base-ref main --fail-on-risk high
 
 Use it in 60 seconds:
 
@@ -15,6 +17,7 @@ Use it in 60 seconds:
   with:
     path: skills
     fail-on: warning
+    fail-on-risk: high
 
 Repo: https://github.com/San-Z1/skill-doctor
 
@@ -36,7 +39,7 @@ The problems are usually small:
 
 I built Skill Doctor to catch those issues before they land in a repository.
 
-It runs locally or in CI, emits GitHub workflow annotations, Markdown, JSON, and SARIF, and gives each scan a quality score and grade.
+It runs locally or in CI and gives each static scan a quality score and grade. Version 1.1 adds Git-based change review, explainable risk evidence, tool/trigger deltas, resource hashes, and before/after findings. On pull requests the Action uses the base commit automatically and writes a job summary without a write token. No API keys or model calls; scanned scripts are never executed. Risk heuristics are not a security verdict.
 
 Quick setup:
 
@@ -44,6 +47,7 @@ Quick setup:
   with:
     path: skills
     fail-on: warning
+    fail-on-risk: high
 
 Repo: https://github.com/San-Z1/skill-doctor
 

@@ -33,6 +33,12 @@ jobs:
       - name: Build wheel
         run: python -m pip wheel . --no-deps -w dist
 
+      - name: Build standalone Skill and check change review
+        run: |
+          python scripts/build_skill_bundle.py
+          python scripts/demo_change_review.py --fail-on-risk high || test "$?" -eq 1
+          python -m skill_doctor skills --fail-on warning
+
       - name: Run example scans
         run: |
           python -m skill_doctor examples/good-skills --format json
